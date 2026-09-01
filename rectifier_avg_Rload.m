@@ -40,6 +40,8 @@ p.tStop = 1;
 p.dtOut = 1e-5;
 p.maxStep = 1e-4;
 
+p.Kad = 5;
+
 p.f0 = 60;
 p.w0 = 2*pi*p.f0;
 p.kSOGI = 1;            % SOGI damping factor
@@ -367,7 +369,6 @@ function a = rectifierAlgebraic(t,x,p)
     iC_d = iL_d - ig_d;
     iC_q = iL_q - ig_q;
 
-    p.Kad = 5;
 
     % Scalar fixed-point solve for the ESR/modulator/controller algebraic loop.
     vdc = max(vC_dc,p.vdcFloor);
@@ -421,8 +422,21 @@ function a = rectifierAlgebraic(t,x,p)
     a.vPI_d = p.k5*e4+p.k6*(a.id_ref-a.ihat_d);
     a.vPI_q = p.k7*e5+p.k8*(p.iq_ref-a.ihat_q);
 
-    a.vconv_d_ref = a.vPI_d-p.w0*p.L*a.ihat_q+p.vd_ff;
-    a.vconv_q_ref = a.vPI_q+p.w0*p.L*a.ihat_d+p.vq_ff;
+    % a.vconv_d_ref = a.vPI_d-p.w0*p.L*a.ihat_q+p.vd_ff;
+    % a.vconv_q_ref = a.vPI_q+p.w0*p.L*a.ihat_d+p.vq_ff;
+    a.vconv_d_ref = ...
+        p.vg_d ...
+        + Rtot*a.ihat_d ...
+        - p.w0*Ltot*a.ihat_q ...
+        + a.vPI_d ...
+        - p.Kad*iC_d;
+
+    a.vconv_q_ref = ...
+        p.vg_q ...
+        + Rtot*a.ihat_q ...
+        + p.w0*Ltot*a.ihat_d ...
+        + a.vPI_q ...
+        - p.Kad*iC_q;
 
     a.vconv_alpha_ref = a.vconv_d_ref*s+a.vconv_q_ref*c;
     a.vconv_beta_ref  = -a.vconv_d_ref*c+a.vconv_q_ref*s;
