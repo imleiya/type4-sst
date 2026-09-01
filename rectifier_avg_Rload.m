@@ -53,11 +53,11 @@ p.k6 = 20;               % d-current proportional
 p.k7 = 0.5;               % q-current integral
 p.k8 = 20;               % q-current proportional
 
-p.L = 800e-6;                % AC converter-side inductance [H]
+p.L = 400e-6;                % AC converter-side inductance [H]
 p.RL = 0;                 % AC inductor resistance [ohm]
 p.C = 100e-6;                % AC shunt capacitance [F]
 
-p.Lg = 800e-6;               % grid-side inductance [H]
+p.Lg = 400e-6;               % grid-side inductance [H]
 p.Rg = 0.2;               % grid-side inductor ESR [ohm]
 p.vg_d = 170;             % stiff-grid d-axis voltage [V]
 p.vg_q = 0;             % stiff-grid q-axis voltage [V]
@@ -205,6 +205,8 @@ xlabel('Time [s]'); ylabel('Voltage [V]');
 legend('v_{conv,\alpha}^*','v_{conv,\alpha}');
 title('Converter voltage command vs average');
 
+
+
 %% 8) OPTIONAL SIMULINK COMPARISON
 % Set cmp.enabled = true and replace the model/signal names.
 % The Simulink signals must be logged to logsout.
@@ -279,7 +281,7 @@ function dx = rectifierODE(t,x,p)
     dx(3) = a.vhat_q;
     dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
 
-    dx(5) = p.kSOGI*p.w0*(a.iL_alpha-i_alpha)-p.w0*i_beta;
+    dx(5) = p.kSOGI*p.w0*(a.i_ac_terminal-i_alpha)-p.w0*i_beta;
     dx(6) = p.w0*i_alpha;
 
     dx(7) = p.vdc_ref-a.v_dc;
