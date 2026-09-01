@@ -33,25 +33,25 @@
 
 clear;
 clc;
-% close all;
+close all;
 
 %% 1) USER PARAMETERS
 p.tStop = 1;
-p.dtOut = 1e-6;
+p.dtOut = 1e-5;
 p.maxStep = 1e-4;
 
 p.f0 = 60;
 p.w0 = 2*pi*p.f0;
-p.kSOGI = 1;            % <-- enter
+p.kSOGI = 1;            % SOGI damping factor
 
 p.k1 = 100;               % PLL proportional
 p.k2 = 1;               % PLL integral
 p.k3 = 0.1;               % DC-voltage proportional
 p.k4 = 5;               % DC-voltage integral
-p.k5 = 0.5;               % d-current integral
-p.k6 = 20;               % d-current proportional
-p.k7 = 0.5;               % q-current integral
-p.k8 = 20;               % q-current proportional
+p.k5 = 100; %0.5;               % d-current integral
+p.k6 = 0.8; %20;               % d-current proportional
+p.k7 = 100; %0.5;               % q-current integral
+p.k8 = 0.8; %20;               % q-current proportional
 
 p.L = 800e-6;                % AC converter-side inductance [H]
 p.RL = 0;                 % AC inductor resistance [ohm]
@@ -139,6 +139,18 @@ xlabel('Time [s]'); ylabel('i_{AC} [A]');
 title('AC terminal current');
 
 nexttile;
+plot(avg.t,avg.v_grid_alpha);
+grid on;
+xlabel('Time [s]'); ylabel('v_{grid,\alpha} [V]');
+title('v_{grid,\alpha}');
+
+nexttile;
+plot(avg.t,avg.iL_alpha);
+grid on;
+xlabel('Time [s]'); ylabel('i_{L,\alpha} [A]');
+title('i_{L,\alpha}');
+
+nexttile;
 plot(avg.t,avg.v_dc);
 grid on;
 xlabel('Time [s]'); ylabel('v_{dc} [V]');
@@ -149,18 +161,6 @@ plot(avg.t,avg.i_dc);
 grid on;
 xlabel('Time [s]'); ylabel('i_{dc} [A]');
 title('DC-link inductor current');
-
-nexttile;
-plot(avg.t,avg.vo);
-grid on;
-xlabel('Time [s]'); ylabel('v_o [V]');
-title('DC load/output voltage');
-
-nexttile;
-plot(avg.t,avg.i_load);
-grid on;
-xlabel('Time [s]'); ylabel('i_{load} [A]');
-title('DC load/output current');
 
 fprintf('Plotting the controller signals...');
 figure('Name','Averaged Rectifier - Controller Signals');
@@ -204,6 +204,25 @@ grid on;
 xlabel('Time [s]'); ylabel('Voltage [V]');
 legend('v_{conv,\alpha}^*','v_{conv,\alpha}');
 title('Converter voltage command vs average');
+
+figure;
+plot(avg.t,avg.ig_d,avg.t,avg.ig_q);
+grid on;
+legend('i_{g,d}','i_{g,q}');
+
+figure;
+plot(avg.t,avg.iL_d,avg.t,avg.iL_q);
+grid on;
+legend('i_{L,d}','i_{L,q}');
+
+iC_d = avg.iL_d - avg.ig_d;
+iC_q = avg.iL_q - avg.ig_q;
+
+figure;
+plot(avg.t,iC_d,avg.t,iC_q);
+grid on;
+legend('i_{C,d}','i_{C,q}');
+
 
 %% 8) OPTIONAL SIMULINK COMPARISON
 % Set cmp.enabled = true and replace the model/signal names.
@@ -279,7 +298,7 @@ function dx = rectifierODE(t,x,p)
     dx(3) = a.vhat_q;
     dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
 
-    dx(5) = p.kSOGI*p.w0*(a.iL_alpha-i_alpha)-p.w0*i_beta;
+    dx(5) = p.kSOGI*p.w0*(a.i_ac_terminal-i_alpha)-p.w0*i_beta;
     dx(6) = p.w0*i_alpha;
 
     dx(7) = p.vdc_ref-a.v_dc;
@@ -341,6 +360,15 @@ function a = rectifierAlgebraic(t,x,p)
     a.ihat_d = i_alpha*s-i_beta*c;
     a.ihat_q = i_alpha*c+i_beta*s;
 
+
+    Ltot = p.L + p.Lg;
+    Rtot = p.RL + p.Rg;
+
+    iC_d = iL_d - ig_d;
+    iC_q = iL_q - ig_q;
+
+    p.Kad = 5;
+
     % Scalar fixed-point solve for the ESR/modulator/controller algebraic loop.
     vdc = max(vC_dc,p.vdcFloor);
     A = p.Rsh/(p.Rsh+p.RCdc);
@@ -352,8 +380,22 @@ function a = rectifierAlgebraic(t,x,p)
         vPI_d = p.k5*e4+p.k6*(id_ref-a.ihat_d);
         vPI_q = p.k7*e5+p.k8*(p.iq_ref-a.ihat_q);
 
-        vconv_d_ref = vPI_d-p.w0*p.L*a.ihat_q+p.vd_ff;
-        vconv_q_ref = vPI_q+p.w0*p.L*a.ihat_d+p.vq_ff;
+        % vconv_d_ref = vPI_d-p.w0*p.L*a.ihat_q+p.vd_ff;
+        % vconv_q_ref = vPI_q+p.w0*p.L*a.ihat_d+p.vq_ff;
+
+        vconv_d_ref = ...
+            p.vg_d ...
+            + Rtot*a.ihat_d ...
+            - p.w0*Ltot*a.ihat_q ...
+            + vPI_d ...
+            - p.Kad*iC_d;
+
+        vconv_q_ref = ...
+            p.vg_q ...
+            + Rtot*a.ihat_q ...
+            + p.w0*Ltot*a.ihat_d ...
+            + vPI_q ...
+            - p.Kad*iC_q;
 
         vconv_alpha_ref = vconv_d_ref*s+vconv_q_ref*c;
 
