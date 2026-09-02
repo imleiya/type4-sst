@@ -1,25 +1,25 @@
-%% run_rectifier_averaged_17state.m
+%% rectifier_avg_Rload.m
 % Averaged nonlinear model of the single-phase rectifier stage.
 %
 % State order:
-% x(1)  = v_alpha
-% x(2)  = v_beta
-% x(3)  = e2
+% x(1)  = v_alpha       % voltage SOGI state
+% x(2)  = v_beta        % voltage SOGI state
+% x(3)  = e2            
 % x(4)  = theta
-% x(5)  = i_alpha
-% x(6)  = i_beta
-% x(7)  = e3
-% x(8)  = e4
-% x(9)  = e5
-% x(10) = iL_d
-% x(11) = iL_q
-% x(12) = vC_d
-% x(13) = vC_q
-% x(14) = i_dc
-% x(15) = vC_dc
-% x(16) = ig_d
-% x(17) = ig_q
-%
+% x(5)  = i_alpha       % current SOGI state
+% x(6)  = i_beta        % current SOGI state
+% x(7)  = e3            % DC voltage controller PI integrator state
+% x(8)  = e4            % current controller d-axis PI integrator state
+% x(9)  = e5            % current controller q-axis PI integrator state
+% x(10) = iL_d          % converter-side inductor d-axis current in plant frame (phi)
+% x(11) = iL_q          % converter-side inductor q-axis current in plant frame (phi)
+% x(12) = vC_d          % shunt capacitor d-axis voltage in plant frame (phi)
+% x(13) = vC_q          % shunt capacitor q-axis voltage in plant frame (phi)
+% x(14) = i_dc          % DC-link inductor current
+% x(15) = vC_dc         % DC-link capacitor voltage
+% x(16) = ig_d          % grid-side inductor d-axis current in plant frame (phi)
+% x(17) = ig_q          % grid-side inductor q-axis current in plant frame (phi)
+
 % Sign conventions:
 %   iL   > 0 : converter -> AC terminal/grid
 %   ig   > 0 : AC capacitor node -> grid
@@ -28,57 +28,56 @@
 %
 % IMPORTANT:
 %   The grid current is modeled dynamically through Lg + Rg.
-%   vg_d and vg_q are stiff-grid dq voltage inputs specified by the user.
 %   A shunt load resistor Rload closes the DC output after Ldc + RLdc.
 
 clear;
 clc;
-% close all;
+close all;
 
 %% 1) USER PARAMETERS
 p.tStop = 1.5;
 p.dtOut = 1e-5;
 p.maxStep = 1e-4;
 
-p.Kad = 1;  % virtual resistance for the LCL capacitor current feedback. Set to 0 to disable.
+p.Kad = 0.25;  % virtual resistance for the LCL capacitor current feedback. Set to 0 to disable.
 
 p.f0 = 60;
 p.w0 = 2*pi*p.f0;
 p.kSOGI = 1;            % SOGI damping factor
 
-p.k1 = 100;               % PLL proportional
+p.k1 = 100;             % PLL proportional
 p.k2 = 1;               % PLL integral
-p.k3 = 0.1;               % DC-voltage proportional
+p.k3 = 0.1;             % DC-voltage proportional
 p.k4 = 5;               % DC-voltage integral
-p.k5 = 0.5;               % d-current integral
-p.k6 = 20;               % d-current proportional
-p.k7 = 0.5;               % q-current integral
-p.k8 = 20;               % q-current proportional
+p.k5 = 0.5;             % d-current integral
+p.k6 = 20;              % d-current proportional
+p.k7 = 0.5;             % q-current integral
+p.k8 = 20;              % q-current proportional
 
-p.L = 800e-6;                % AC converter-side inductance [H]
-p.RL = 0;                 % AC inductor resistance [ohm]
-p.C = 100e-6;                % AC shunt capacitance [F]
+p.L = 800e-6;           % AC converter-side inductance [H]
+p.RL = 0;               % AC inductor resistance [ohm]
+p.C = 100e-6;           % AC shunt capacitance [F]
 
-p.Lg = 800e-6;               % grid-side inductance [H]
-p.Rg = 0.2;               % grid-side inductor ESR [ohm]
-p.vg_d = 170;             % stiff-grid d-axis voltage [V]
+p.Lg = 800e-6;          % grid-side inductance [H]
+p.Rg = 0.2;             % grid-side inductor ESR [ohm]
+p.vg_d = 170;           % stiff-grid d-axis voltage [V]
 p.vg_q = 0;             % stiff-grid q-axis voltage [V]
 
-p.Ldc  = 1e-6;             % DC series inductance [H]
-p.RLdc = 0.1;             % DC inductor ESR [ohm]
-p.Cdc  = 400e-6;             % DC-link capacitance [F]
-p.RCdc = 0.01;             % DC capacitor ESR [ohm]
-p.Rsh  = 1e6;             % DC shunt resistance [ohm]
-p.Rload = 88;            % DC output/load resistance [ohm]
+p.Ldc  = 1e-6;          % DC series inductance [H]
+p.RLdc = 0.1;           % DC inductor ESR [ohm]
+p.Cdc  = 400e-6;        % DC-link capacitance [F]
+p.RCdc = 0.01;          % DC capacitor ESR [ohm]
+p.Rsh  = 1e6;           % DC shunt resistance [ohm]
+p.Rload = 88;           % DC output/load resistance [ohm]
 
-p.vdc_ref = 300;
-p.iq_ref  = 0;
-p.igq_ref = 0;
-p.vd_ff = 170;            % constant feedforward d voltage [V]
+p.vdc_ref = 300;        % DC voltage reference [V]
+p.iq_ref  = 0;          % q-axis current reference [A]
+p.igq_ref = 0;          % grid q-axis current reference [A]
+p.vd_ff = 170;          % constant feedforward d voltage [V]
 p.vq_ff = 0;            % constant feedforward q voltage [V]
 
 % the code iteratively solves for a consistent vdc at every ODE evaluation
-p.vdcFloor = 1;       % prevent devision by 0 when calculating mod-index
+p.vdcFloor = 1;        % prevent devision by 0 when calculating mod-index
 p.algTol = 1e-10;       % convergence tol for algebraic-loop iteration
 p.algMaxIter = 50;      % maximum number of iterations for solving algebraic loop at one ODE eval
 p.algRelax = 0.7;       % relaxation factor to prevent oscillatory convergence
@@ -130,25 +129,25 @@ figure('Name','Averaged Rectifier - Terminal Signals');
 tiledlayout(3,2);
 
 nexttile;
-plot(avg.t,avg.v_grid_alpha);
+plot(avg.t,avg.vg);
 grid on;
 xlabel('Time [s]'); ylabel('v_{AC} [V]');
 title('AC terminal voltage');
 
 nexttile;
-plot(avg.t,avg.i_ac_terminal);
+plot(avg.t,avg.ig);
 grid on;
 xlabel('Time [s]'); ylabel('i_{AC} [A]');
 title('AC terminal current');
 
 nexttile;
-plot(avg.t,avg.v_ac_terminal);
+plot(avg.t,avg.vC);
 grid on;
 xlabel('Time [s]'); ylabel('Voltage [V]');
 title('Capacitor voltage');
 
 nexttile;
-plot(avg.t,avg.iL_alpha);
+plot(avg.t,avg.iL);
 grid on;
 xlabel('Time [s]'); ylabel('Current [A]');
 title('Converter-side inductor current');
@@ -260,9 +259,9 @@ xlim([0 p.tStop]);
 
 
 figure('Name','Grid Voltage Reference Check');
-plot(avg.t,avg.v_grid_alpha,'LineWidth',1.2);
+plot(avg.t,avg.vg,'LineWidth',1.2);
 hold on;
-plot(avg.t,avg.v_grid_alpha_theta,'--','LineWidth',1.2);
+plot(avg.t,avg.vg_theta,'--','LineWidth',1.2);
 grid on;
 
 xlabel('Time [s]');
@@ -277,8 +276,8 @@ title('Grid Voltage Reconstruction');
 % The Simulink signals must be logged to logsout.
 cmp.enabled = false;
 cmp.modelName = 'your_switched_model';
-cmp.vacLogName = 'v_ac_terminal';
-cmp.iacLogName = 'i_ac_terminal';
+cmp.vacLogName = 'vC';
+cmp.iacLogName = 'ig';
 cmp.vdcLogName = 'v_dc';
 cmp.idcLogName = 'i_dc';
 
@@ -299,13 +298,13 @@ if cmp.enabled
 
     nexttile;
     plot(sw.vac.Time,sw.vac.Data); hold on;
-    plot(avg.t,avg.v_ac_terminal,'LineWidth',1.2);
+    plot(avg.t,avg.vC,'LineWidth',1.2);
     grid on; xlabel('Time [s]'); ylabel('Voltage [V]');
     legend('Switched','Averaged'); title('AC terminal voltage');
 
     nexttile;
     plot(sw.iac.Time,sw.iac.Data); hold on;
-    plot(avg.t,avg.i_ac_terminal,'LineWidth',1.2);
+    plot(avg.t,avg.ig,'LineWidth',1.2);
     grid on; xlabel('Time [s]'); ylabel('Current [A]');
     legend('Switched','Averaged'); title('AC terminal current');
 
@@ -341,20 +340,20 @@ function dx = rectifierODE(t,x,p)
 
     dx = zeros(17,1);
 
-    dx(1) = p.kSOGI*p.w0*(a.v_ac_terminal-v_alpha)-p.w0*v_beta;
+    dx(1) = p.kSOGI*p.w0*(a.vC-v_alpha)-p.w0*v_beta;
     dx(2) = p.w0*v_alpha;
     dx(3) = a.vhat_q;
     dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
 
-    dx(5) = p.kSOGI*p.w0*(a.iL_alpha-i_alpha)-p.w0*i_beta;
+    dx(5) = p.kSOGI*p.w0*(a.iL-i_alpha)-p.w0*i_beta;
     dx(6) = p.w0*i_alpha;
 
     dx(7) = p.vdc_ref-a.v_dc;
     dx(8) = a.id_ref-a.ihat_d;
     dx(9) = p.iq_ref-a.ihat_q;
 
-    dx(10) = (a.vconv_d_phi-vC_d-p.RL*iL_d)/p.L+p.w0*iL_q;
-    dx(11) = (a.vconv_q_phi-vC_q-p.RL*iL_q)/p.L-p.w0*iL_d;
+    dx(10) = (a.vconv_d - vC_d - p.RL*iL_d)/p.L + p.w0*iL_q;
+    dx(11) = (a.vconv_q - vC_q - p.RL*iL_q)/p.L - p.w0*iL_d;
 
     dx(12) = (iL_d-ig_d)/p.C+p.w0*vC_q;
     dx(13) = (iL_q-ig_q)/p.C-p.w0*vC_d;
@@ -368,8 +367,15 @@ function dx = rectifierODE(t,x,p)
 end
 
 function a = rectifierAlgebraic(t,x,p)
+%RECTIFIERALGEBRAIC Calculates all quantities that are not independent dynamic states but are needed by the ODEs.
+%   x(t) --> frame transformations --> controller eqns --> vconv_ref --> m --> i_b --> vdc
+%   for-loop solves an instantaneous algebraic loop for vdc, which is used in the modulator and controller equations.
+%   vdc --> ic_ref --> vconv_ref --> m --> i_b --> vdc
+
+    % unpack states to be used in the algebraic equations
     v_alpha = x(1);
     v_beta  = x(2);
+            % e2 = x(3) is not used in the algebraic equations
     theta   = x(4);
     i_alpha = x(5);
     i_beta  = x(6);
@@ -385,82 +391,94 @@ function a = rectifierAlgebraic(t,x,p)
     ig_d     = x(16);
     ig_q     = x(17);
 
-    s = sin(theta);
-    c = cos(theta);
-
     % Stiff-grid dq quantities
     a.vg_d = p.vg_d;
     a.vg_q = p.vg_q;
 
+    % plant frame angle (phi) is independent of PLL angle output (theta)
     phi = p.w0*t;
     sp = sin(phi);
     cp = cos(phi);  
-
-    % Physical alpha-axis terminal/grid quantities
-    a.v_ac_terminal = vC_d*sp+vC_q*cp;
-    a.iL_alpha      = iL_d*sp+iL_q*cp;
-    a.i_ac_terminal = ig_d*sp+ig_q*cp;
-    a.v_grid_alpha  = p.vg_d*sp+p.vg_q*cp;
-    a.v_grid_alpha_theta  = p.vg_d*s+p.vg_q*c;
+    % Physical grid keeps rotating perfectly at the nominal frequency
+    a.vC = vC_d*sp + vC_q*cp;
+    a.iL = iL_d*sp + iL_q*cp;
+    a.ig = ig_d*sp + ig_q*cp;
+    a.vg = p.vg_d*sp + p.vg_q*cp;
 
     % DC output/load quantities. Because i_dc is defined positive from
     % the load node toward the DC link, normal rectification has i_dc < 0.
     a.i_load = -i_dc;
     a.vo = p.Rload*a.i_load;       % equivalently, -p.Rload*i_dc
 
-    a.vhat_d = v_alpha*s-v_beta*c;
-    a.vhat_q = v_alpha*c+v_beta*s;
-    a.ihat_d = i_alpha*s-i_beta*c;
-    a.ihat_q = i_alpha*c+i_beta*s;
+    % controller frame angle (theta) = the PLL-estimated angle
+    s = sin(theta);
+    c = cos(theta);
+            % !!!! for DIAGNOSTIC ONLY: does theta lock with phi?
+            a.vg_theta  = p.vg_d*s+p.vg_q*c;
+    % controller uses hatted-dq quantities = plant-frame alpha-beta quantities rotated by theta
+    a.vhat_d = v_alpha*s - v_beta*c;
+    a.vhat_q = v_alpha*c + v_beta*s;
+    a.ihat_d = i_alpha*s - i_beta*c;
+    a.ihat_q = i_alpha*c + i_beta*s;
 
     % Scalar fixed-point solve for the ESR/modulator/controller algebraic loop.
     vdc = max(vC_dc,p.vdcFloor);
     A = p.Rsh/(p.Rsh+p.RCdc);
 
-    % % version 3
-        iC_d = iL_d - ig_d;
-        iC_q = iL_q - ig_q;
-        % vconv_d_ref = vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff- p.Kad*iC_d;
-        % vconv_q_ref = vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff - p.Kad*iC_q;
+    % capacitor current in plant frame (phi)
+    iC_d = iL_d - ig_d;
+    iC_q = iL_q - ig_q;
 
-        iC_alpha = iC_d*sp + iC_q*cp;
-        iC_beta  = -iC_d*cp + iC_q*sp;
+    % transform to stationary frame
+    iC_alpha = iC_d*sp + iC_q*cp;
+    iC_beta  = -iC_d*cp + iC_q*sp;
 
-        % rotate from plant frame (phi) to PLL frame (theta) before entering the controller equations
-        iC_d = ...
-            iC_alpha*s ...
-            - iC_beta*c;
+    % rotate by theta before entering the controller algebraic equations
+    iChat_d = iC_alpha*s - iC_beta*c;
+    iChat_q = iC_alpha*c + iC_beta*s;
 
-        iC_q = ...
-            iC_alpha*c ...
-            + iC_beta*s;
-
+    % Iteratively solve for a consistent vdc at every ODE evaluation
+    % the controller uses vdc to determine current controller voltage reference output
+    % which is used to determine the modulation
+    % which dictates the bridge DC current
+    % which affects the DC capacitor ESR voltage drop 
+    % which affects the DC capacitor voltage
     for k = 1:p.algMaxIter
         ev = p.vdc_ref-vdc;
         id_ref = -p.k3*ev - p.k4*e3;
 
-        vPI_d = p.k5*e4+p.k6*(id_ref-a.ihat_d);
-        vPI_q = p.k7*e5+p.k8*(p.iq_ref-a.ihat_q);
+        % Current controller outputs dq voltage references
+        vPI_d = p.k5*e4 + p.k6*(id_ref - a.ihat_d);
+        vPI_q = p.k7*e5 + p.k8*(p.iq_ref - a.ihat_q);
 
-        vconv_d_ref = vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff- p.Kad*iC_d;
-        vconv_q_ref = vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff - p.Kad*iC_q;
+        % add decoupling terms and feedforward terms to get the final dq voltage references
+        % last term: virtual resistance for the LCL capacitor current feedback. Set to 0 to disable.
+        vconvhat_d_ref = vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff- p.Kad*iChat_d;
+        vconvhat_q_ref = vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff - p.Kad*iChat_q;
 
-        vconv_alpha_ref = vconv_d_ref*s+vconv_q_ref*c;
+        % undo rotation by theta to get the stationary-frame voltages
+        vconv_alpha_ref = vconvhat_d_ref*s + vconvhat_q_ref*c;
+                % vconv_beta_ref  = -vconvhat_d_ref*c + vconvhat_q_ref*s;     % not used 
 
+        % determine modulation index
         vdc_for_mod = max(vdc,p.vdcFloor);
-        mstar = vconv_alpha_ref/vdc_for_mod;
-        m = min(max(mstar,-1),1);
+        mstar = vconv_alpha_ref/vdc_for_mod;    % definition of modulation index for averaged bridge model
+        m = min(max(mstar,-1),1);   % enforce saturation limits
 
-        i_b = m*a.iL_alpha;
-        vdc_new = A*(vC_dc+p.RCdc*(i_dc-i_b));
+        % calculate bridge current; this preserves p(t) for ideal averaged bridge model
+        i_b = m*a.iL;           
+        % calculate new vdc based on the bridge current and the DC capacitor ESR drop
+        vdc_new = A*(vC_dc+p.RCdc*(i_dc-i_b));  
 
-        if abs(vdc_new-vdc) <= p.algTol*max(1,abs(vdc))
+        if abs(vdc_new-vdc) <= p.algTol*max(1,abs(vdc)) % converged to a consistent vdc value
             vdc = vdc_new;
             break;
         end
+        % relax the iteration by going just 0.7 of the way to the new value to prevent oscillatory convergence
         vdc = (1-p.algRelax)*vdc+p.algRelax*vdc_new;
     end
 
+    % recalculate everthing with the final vdc value to return to the ODE function
     a.v_dc = vdc;
     a.ev_dc = p.vdc_ref-a.v_dc;
     a.id_ref = -p.k3*a.ev_dc-p.k4*e3;
@@ -469,41 +487,42 @@ function a = rectifierAlgebraic(t,x,p)
     a.vPI_d = p.k5*e4+p.k6*(a.id_ref-a.ihat_d);
     a.vPI_q = p.k7*e5+p.k8*(p.iq_ref-a.ihat_q);
 
-    a.vconv_d_ref = a.vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff- p.Kad*iC_d;
-    a.vconv_q_ref = a.vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff- p.Kad*iC_q;
+    a.vconvhat_d_ref = a.vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff - p.Kad*iChat_d;
+    a.vconvhat_q_ref = a.vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff - p.Kad*iChat_q;
 
-    a.vconv_alpha_ref = a.vconv_d_ref*s+a.vconv_q_ref*c;
-    a.vconv_beta_ref  = -a.vconv_d_ref*c+a.vconv_q_ref*s;
+    % undo rotation by theta to get the stationary-frame voltages
+    a.vconv_alpha_ref = a.vconvhat_d_ref*s+a.vconvhat_q_ref*c;
+    a.vconv_beta_ref  = -a.vconvhat_d_ref*c+a.vconvhat_q_ref*s;
 
-    % rotate from controller frame (theta) to phi (plant frame) before entering the plant equations
-    a.vconv_d_phi = ...
-        a.vconv_alpha_ref*sp ...
-        - a.vconv_beta_ref*cp;
-    a.vconv_q_phi = ...
-        a.vconv_alpha_ref*cp ...
-        + a.vconv_beta_ref*sp;
-
-
+    % modulation index
     vdc_for_mod = max(a.v_dc,p.vdcFloor);
     a.mstar = a.vconv_alpha_ref/vdc_for_mod;
     a.m = min(max(a.mstar,-1),1);
 
+    % m=m* == gamma=1 when the modulation is NOT saturated. Otherwise, gamma < 1.
     if abs(a.mstar) > 1e-12
         a.gamma = a.m/a.mstar;
     else
         a.gamma = 1;
     end
 
-    a.vconv_d = a.gamma*a.vconv_d_ref;
-    a.vconv_q = a.gamma*a.vconv_q_ref;
+    % back to physical quantities 
+    % actual voltage applied to the AC side of the rectifier, by definition of the averaged bridge model
     a.vconv_alpha = a.m*a.v_dc;
+    a.vconv_beta= a.gamma*a.vconv_beta_ref;
 
-    a.i_b = a.m*a.iL_alpha;
+    % rotate by phi (plant frame) before entering the plant equations
+    a.vconv_d = a.vconv_alpha*sp - a.vconv_beta_ref*cp;
+    a.vconv_q = a.vconv_alpha*cp + a.vconv_beta_ref*sp;
+
+    % DC-side KCL
+    a.i_b = a.m*a.iL;
     a.iC_dc = i_dc-a.i_b-a.v_dc/p.Rsh;
     a.i_sh = a.v_dc/p.Rsh;
 
+    % check whether fixed-point solution converged to a consistent vdc value
     vdc_check = A*(vC_dc+p.RCdc*(i_dc-a.i_b));
-    a.algResidual = a.v_dc-vdc_check;
+    a.algResidual = a.v_dc-vdc_check;     % ideally this should be 0; may not be if fixed-point iteration did not converge
 end
 
 function avg = reconstructSignals(t,x,p)
@@ -529,11 +548,11 @@ function avg = reconstructSignals(t,x,p)
     avg.ig_d     = x(:,16);
     avg.ig_q     = x(:,17);
 
-    names = {'vg_d','vg_q','vo','i_load','v_ac_terminal','i_ac_terminal','v_grid_alpha','v_grid_alpha_theta','iL_alpha', ...
+    names = {'vg_d','vg_q','vo','i_load','vC','ig','vg','vg_theta','iL', ...
              'vhat_d','vhat_q','ihat_d','ihat_q','ev_dc','id_ref','iq_ref', ...
-             'vPI_d','vPI_q','vconv_d_ref','vconv_q_ref','vconv_alpha_ref', ...
+             'vPI_d','vPI_q','vconvhat_d_ref','vconvhat_q_ref','vconv_alpha_ref', ...
              'vconv_beta_ref','mstar','m','gamma','vconv_d','vconv_q', ...
-             'vconv_alpha','i_b','v_dc','iC_dc','i_sh','algResidual'};
+             'vconv_alpha','vconv_beta','i_b','v_dc','iC_dc','i_sh','algResidual'};
 
     for k = 1:numel(names)
         avg.(names{k}) = zeros(N,1);
