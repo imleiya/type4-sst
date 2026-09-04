@@ -343,7 +343,7 @@ function dx = rectifierODE(t,x,p)
     dx(1) = p.kSOGI*p.w0*(a.vC-v_alpha)-p.w0*v_beta;
     dx(2) = p.w0*v_alpha;
     dx(3) = a.vhat_q;
-    dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
+    % dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
 
     dx(5) = p.kSOGI*p.w0*(a.iL-i_alpha)-p.w0*i_beta;
     dx(6) = p.w0*i_alpha;
