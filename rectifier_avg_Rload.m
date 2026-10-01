@@ -35,11 +35,11 @@ clc;
 close all;
 
 %% 1) USER PARAMETERS
-p.tStop = 1.5;
-p.dtOut = 1e-5;
+p.tStop = 1;
+p.dtOut = 2e-5;
 p.maxStep = 1e-4;
 
-p.Kad = 0.25;  % virtual resistance for the LCL capacitor current feedback. Set to 0 to disable.
+p.Kad = 0;  % virtual resistance for the LCL capacitor current feedback. Set to 0 to disable.
 
 p.f0 = 60;
 p.w0 = 2*pi*p.f0;
@@ -124,152 +124,300 @@ avg.x = x;
 save('rectifier_averaged_results.mat','avg','p');
 
 %% 7) BASIC PLOTS
-fprintf('Plotting the terminal signals...');
-figure('Name','Averaged Rectifier - Terminal Signals');
-tiledlayout(3,2);
+% fprintf('Plotting the terminal signals...');
+% figure('Name','Averaged Rectifier - Terminal Signals');
+% tiledlayout(3,2);
 
-nexttile;
-plot(avg.t,avg.vg);
-grid on;
-xlabel('Time [s]'); ylabel('v_{AC} [V]');
-title('AC terminal voltage');
+% nexttile;
+% plot(avg.t,avg.vg);
+% grid on;
+% xlabel('Time [s]'); ylabel('v_{AC} [V]');
+% title('AC terminal voltage');
 
-nexttile;
-plot(avg.t,avg.ig);
-grid on;
-xlabel('Time [s]'); ylabel('i_{AC} [A]');
-title('AC terminal current');
+% nexttile;
+% plot(avg.t,avg.ig);
+% grid on;
+% xlabel('Time [s]'); ylabel('i_{AC} [A]');
+% title('AC terminal current');
 
-nexttile;
-plot(avg.t,avg.vC);
-grid on;
-xlabel('Time [s]'); ylabel('Voltage [V]');
-title('Capacitor voltage');
+% nexttile;
+% plot(avg.t,avg.vC);
+% grid on;
+% xlabel('Time [s]'); ylabel('Voltage [V]');
+% title('Capacitor voltage');
 
-nexttile;
-plot(avg.t,avg.iL);
-grid on;
-xlabel('Time [s]'); ylabel('Current [A]');
-title('Converter-side inductor current');
+% nexttile;
+% plot(avg.t,avg.iL);
+% grid on;
+% xlabel('Time [s]'); ylabel('Current [A]');
+% title('Converter-side inductor current');
 
-nexttile;
-plot(avg.t,avg.v_dc);
-grid on;
-xlabel('Time [s]'); ylabel('v_{dc} [V]');
-title('Measured DC-link voltage');
+% nexttile;
+% plot(avg.t,avg.v_dc);
+% grid on;
+% xlabel('Time [s]'); ylabel('v_{dc} [V]');
+% title('Measured DC-link voltage');
 
-nexttile;
-plot(avg.t,avg.i_dc);
-grid on;
-xlabel('Time [s]'); ylabel('i_{dc} [A]');
-title('DC-link inductor current');
+% nexttile;
+% plot(avg.t,avg.i_dc);
+% grid on;
+% xlabel('Time [s]'); ylabel('i_{dc} [A]');
+% title('DC-link inductor current');
 
 
-fprintf('Plotting the controller signals...');
-figure('Name','Averaged Rectifier - Controller Signals');
-tiledlayout(3,2);
+% fprintf('Plotting the controller signals...');
+% figure('Name','Averaged Rectifier - Controller Signals');
+% tiledlayout(3,2);
 
-nexttile;
-plot(avg.t,avg.theta);
-grid on;
-xlabel('Time [s]'); ylabel('\theta [rad]');
-title('PLL angle');
+% nexttile;
+% plot(avg.t,avg.theta);
+% grid on;
+% xlabel('Time [s]'); ylabel('\theta [rad]');
+% title('PLL angle');
 
-nexttile;
-plot(avg.t,avg.vhat_q);
-grid on;
-xlabel('Time [s]'); ylabel('\hat{v}_q [V]');
-title('PLL q-axis error');
+% nexttile;
+% plot(avg.t,avg.vhat_q);
+% grid on;
+% xlabel('Time [s]'); ylabel('\hat{v}_q [V]');
+% title('PLL q-axis error');
 
-nexttile;
-plot(avg.t,avg.id_ref,avg.t,avg.ihat_d);
-grid on;
-xlabel('Time [s]'); ylabel('Current [A]');
-legend('i_d^*','\hat{i}_d');
-title('d-axis current loop');
+% nexttile;
+% plot(avg.t,avg.id_ref,avg.t,avg.ihat_d);
+% grid on;
+% xlabel('Time [s]'); ylabel('Current [A]');
+% legend('i_d^*','\hat{i}_d');
+% title('d-axis current loop');
 
-nexttile;
-plot(avg.t,avg.iq_ref,avg.t,avg.ihat_q);
-grid on;
-xlabel('Time [s]'); ylabel('Current [A]');
-legend('i_q^*','\hat{i}_q');
-title('q-axis current loop');
+% nexttile;
+% plot(avg.t,avg.iq_ref,avg.t,avg.ihat_q);
+% grid on;
+% xlabel('Time [s]'); ylabel('Current [A]');
+% legend('i_q^*','\hat{i}_q');
+% title('q-axis current loop');
 
-nexttile;
-plot(avg.t,avg.m);
-grid on;
-xlabel('Time [s]'); ylabel('m');
-title('Modulation index');
+% nexttile;
+% plot(avg.t,avg.m);
+% grid on;
+% xlabel('Time [s]'); ylabel('m');
+% title('Modulation index');
 
-nexttile;
-plot(avg.t,avg.vconv_alpha_ref,avg.t,avg.vconv_alpha);
-grid on;
-xlabel('Time [s]'); ylabel('Voltage [V]');
-legend('v_{conv,\alpha}^*','v_{conv,\alpha}');
-title('Converter voltage command vs average');
+% nexttile;
+% plot(avg.t,avg.vconv_alpha_ref,avg.t,avg.vconv_alpha);
+% grid on;
+% xlabel('Time [s]'); ylabel('Voltage [V]');
+% legend('v_{conv,\alpha}^*','v_{conv,\alpha}');
+% title('Converter voltage command vs average');
 
-figure('Name','LCL dq Current Diagnostics');
+% figure('Name','LCL dq Current Diagnostics');
+% tiledlayout(2,1);
+
+% nexttile;
+% plot(avg.t,avg.iL_d,'LineWidth',1.2); hold on;
+% plot(avg.t,avg.ig_d,'LineWidth',1.2);
+% grid on;
+% xlabel('Time [s]');
+% ylabel('Current [A]');
+% legend('i_{L,d}','i_{g,d}');
+% title('d-axis currents');
+% xlim([0 p.tStop]);
+
+% nexttile;
+% plot(avg.t,avg.iL_q,'LineWidth',1.2); hold on;
+% plot(avg.t,avg.ig_q,'LineWidth',1.2);
+% grid on;
+% xlabel('Time [s]');
+% ylabel('Current [A]');
+% legend('i_{L,q}','i_{g,q}');
+% title('q-axis currents');
+% xlim([0 p.tStop]);
+
+% % figure;
+% % plot(avg.t,avg.mstar);
+% % hold on;
+% % plot(avg.t,avg.m);
+% % yline(1,'--');
+% % yline(-1,'--');
+% % grid on;
+% % legend('m^*','m');
+
+% % PLL estimated angular frequency
+% avg.omega_hat = p.w0 ...
+%               + p.k1*avg.vhat_q ...
+%               + p.k2*avg.e2;
+
+% figure('Name','PLL Frequency');
+% plot(avg.t,avg.omega_hat,'LineWidth',1.2);
+% hold on;
+% yline(p.w0,'--','\omega_0');
+% grid on;
+
+% xlabel('Time [s]');
+% ylabel('Angular frequency [rad/s]');
+% legend('\hat{\omega}','\omega_0');
+% title('PLL Estimated Frequency vs Nominal Frequency');
+% xlim([0 p.tStop]);
+
+
+% figure('Name','Grid Voltage Reference Check');
+% plot(avg.t,avg.vg,'LineWidth',1.2);
+% hold on;
+% plot(avg.t,avg.vg_theta,'--','LineWidth',1.2);
+% grid on;
+
+% xlabel('Time [s]');
+% ylabel('Voltage [V]');
+% legend('\phi = \omega_0t','\theta');
+% title('Grid Voltage Reconstruction');
+
+    % ============================================================
+    % Current dq quantities in plant frame (phi) vs controller
+    % frame (theta)
+    % ============================================================
+
+    phi = p.w0*t;
+
+    sp = sin(phi);
+    cp = cos(phi);
+
+    st = sin(avg.theta);
+    ct = cos(avg.theta);
+
+    % ------------------------------------------------------------
+    % Converter-side inductor current
+    %
+    % Existing states iL_d and iL_q are dq quantities in the
+    % plant frame rotating at phi.
+    %
+    % First reconstruct alpha-beta quantities from phi-frame dq.
+    % ------------------------------------------------------------
+    avg.iL_alpha = avg.iL_d.*sp + avg.iL_q.*cp;
+    avg.iL_beta  = -avg.iL_d.*cp + avg.iL_q.*sp;
+
+    % Rotate the same alpha-beta quantities using theta
+    avg.iL_d_theta = avg.iL_alpha.*st - avg.iL_beta.*ct;
+    avg.iL_q_theta = avg.iL_alpha.*ct + avg.iL_beta.*st;
+
+
+    % ------------------------------------------------------------
+    % Grid-side inductor current
+    % ------------------------------------------------------------
+    avg.ig_alpha = avg.ig_d.*sp + avg.ig_q.*cp;
+    avg.ig_beta  = -avg.ig_d.*cp + avg.ig_q.*sp;
+
+    % Rotate using theta
+    avg.ig_d_theta = avg.ig_alpha.*st - avg.ig_beta.*ct;
+    avg.ig_q_theta = avg.ig_alpha.*ct + avg.ig_beta.*st;
+
+%% 7) BASIC PLOTS
+
+fprintf('Plotting diagnostic signals...\n');
+
+figure('Name','Averaged Rectifier - AC and dq Diagnostics');
 tiledlayout(2,1);
 
+
+% ================================================================
+% 1. Grid voltage and capacitor voltage
+% ================================================================
 nexttile;
-plot(avg.t,avg.iL_d,'LineWidth',1.2); hold on;
-plot(avg.t,avg.ig_d,'LineWidth',1.2);
-grid on;
-xlabel('Time [s]');
-ylabel('Current [A]');
-legend('i_{L,d}','i_{g,d}');
-title('d-axis currents');
-xlim([0 p.tStop]);
 
-nexttile;
-plot(avg.t,avg.iL_q,'LineWidth',1.2); hold on;
-plot(avg.t,avg.ig_q,'LineWidth',1.2);
-grid on;
-xlabel('Time [s]');
-ylabel('Current [A]');
-legend('i_{L,q}','i_{g,q}');
-title('q-axis currents');
-xlim([0 p.tStop]);
-
-% figure;
-% plot(avg.t,avg.mstar);
-% hold on;
-% plot(avg.t,avg.m);
-% yline(1,'--');
-% yline(-1,'--');
-% grid on;
-% legend('m^*','m');
-
-% PLL estimated angular frequency
-avg.omega_hat = p.w0 ...
-              + p.k1*avg.vhat_q ...
-              + p.k2*avg.e2;
-
-figure('Name','PLL Frequency');
-plot(avg.t,avg.omega_hat,'LineWidth',1.2);
-hold on;
-yline(p.w0,'--','\omega_0');
-grid on;
-
-xlabel('Time [s]');
-ylabel('Angular frequency [rad/s]');
-legend('\hat{\omega}','\omega_0');
-title('PLL Estimated Frequency vs Nominal Frequency');
-xlim([0 p.tStop]);
-
-
-figure('Name','Grid Voltage Reference Check');
 plot(avg.t,avg.vg,'LineWidth',1.2);
 hold on;
-plot(avg.t,avg.vg_theta,'--','LineWidth',1.2);
-grid on;
+plot(avg.t,avg.vC,'LineWidth',1.2);
+hold on;
+plot(avg.t,avg.v_alpha,'LineWidth',1.2);
+hold on;
+plot(avg.t,avg.v_beta,'LineWidth',1.2);
 
+grid on;
 xlabel('Time [s]');
 ylabel('Voltage [V]');
-legend('\phi = \omega_0t','\theta');
-title('Grid Voltage Reconstruction');
+
+legend('v_g','v_C','v_\\alpha','v_\\beta','Location','best');
+title('Grid and Capacitor Voltages');
+
+xlim([0 p.tStop]);
 
 
+% ================================================================
+% 2. Grid-side and converter-side currents
+% ================================================================
+nexttile;
+
+plot(avg.t,avg.ig,'LineWidth',1.2);
+hold on;
+plot(avg.t,avg.iL,'LineWidth',1.2);
+hold on;
+plot(avg.t,avg.i_alpha,'LineWidth',1.2);
+hold on;
+plot(avg.t,avg.i_beta,'LineWidth',1.2);
+
+grid on;
+xlabel('Time [s]');
+ylabel('Current [A]');
+
+legend('i_g','i_L','i_\\alpha','Location','best');
+title('Grid-side and Converter-side Currents');
+
+xlim([0 p.tStop]);
+
+
+% % ================================================================
+% % 3. d-axis currents:
+% %    plant frame (phi) vs PLL/controller frame (theta)
+% % ================================================================
+% nexttile;
+
+% plot(avg.t,avg.iL_d,'LineWidth',1.2);
+% hold on;
+% plot(avg.t,avg.iL_d_theta,'--','LineWidth',1.2);
+
+% plot(avg.t,avg.ig_d,'LineWidth',1.2);
+% plot(avg.t,avg.ig_d_theta,'--','LineWidth',1.2);
+
+% grid on;
+% xlabel('Time [s]');
+% ylabel('d-axis Current [A]');
+
+% legend( ...
+%     'i_{L,d} \;(\phi)', ...
+%     'i_{L,d} \;(\theta)', ...
+%     'i_{g,d} \;(\phi)', ...
+%     'i_{g,d} \;(\theta)', ...
+%     'Location','best');
+
+% title('d-axis Currents: \phi vs \theta Rotation');
+
+% xlim([0 p.tStop]);
+
+
+% % ================================================================
+% % 4. q-axis currents:
+% %    plant frame (phi) vs PLL/controller frame (theta)
+% % ================================================================
+% nexttile;
+
+% plot(avg.t,avg.iL_q,'LineWidth',1.2);
+% hold on;
+% plot(avg.t,avg.iL_q_theta,'--','LineWidth',1.2);
+
+% plot(avg.t,avg.ig_q,'LineWidth',1.2);
+% plot(avg.t,avg.ig_q_theta,'--','LineWidth',1.2);
+
+% grid on;
+% xlabel('Time [s]');
+% ylabel('q-axis Current [A]');
+
+% legend( ...
+%     'i_{L,q} \;(\phi)', ...
+%     'i_{L,q} \;(\theta)', ...
+%     'i_{g,q} \;(\phi)', ...
+%     'i_{g,q} \;(\theta)', ...
+%     'Location','best');
+
+% title('q-axis Currents: \phi vs \theta Rotation');
+
+% xlim([0 p.tStop]);
 
 %% 8) OPTIONAL SIMULINK COMPARISON
 % Set cmp.enabled = true and replace the model/signal names.
@@ -309,7 +457,7 @@ if cmp.enabled
     legend('Switched','Averaged'); title('AC terminal current');
 
     nexttile;
-    plot(sw.vdc.Time,sw.vdc.Data); hold on;
+    plot(sw.vdc.Time , sw.vdc.Data); hold on;
     plot(avg.t,avg.v_dc,'LineWidth',1.2);
     grid on; xlabel('Time [s]'); ylabel('Voltage [V]');
     legend('Switched','Averaged'); title('DC-link voltage');
@@ -343,7 +491,7 @@ function dx = rectifierODE(t,x,p)
     dx(1) = p.kSOGI*p.w0*(a.vC-v_alpha)-p.w0*v_beta;
     dx(2) = p.w0*v_alpha;
     dx(3) = a.vhat_q;
-    % dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
+    dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
 
     dx(5) = p.kSOGI*p.w0*(a.iL-i_alpha)-p.w0*i_beta;
     dx(6) = p.w0*i_alpha;
@@ -415,6 +563,7 @@ function a = rectifierAlgebraic(t,x,p)
     c = cos(theta);
             % !!!! for DIAGNOSTIC ONLY: does theta lock with phi?
             a.vg_theta  = p.vg_d*s+p.vg_q*c;
+
     % controller uses hatted-dq quantities = plant-frame alpha-beta quantities rotated by theta
     a.vhat_d = v_alpha*s - v_beta*c;
     a.vhat_q = v_alpha*c + v_beta*s;
@@ -480,12 +629,12 @@ function a = rectifierAlgebraic(t,x,p)
 
     % recalculate everthing with the final vdc value to return to the ODE function
     a.v_dc = vdc;
-    a.ev_dc = p.vdc_ref-a.v_dc;
-    a.id_ref = -p.k3*a.ev_dc-p.k4*e3;
+    a.ev_dc = p.vdc_ref-a.v_dc;     % error signal for the DC voltage controller
+    a.id_ref = -p.k3*a.ev_dc - p.k4*e3;
     a.iq_ref = p.iq_ref;
 
-    a.vPI_d = p.k5*e4+p.k6*(a.id_ref-a.ihat_d);
-    a.vPI_q = p.k7*e5+p.k8*(p.iq_ref-a.ihat_q);
+    a.vPI_d = p.k5*e4 + p.k6*(a.id_ref - a.ihat_d);
+    a.vPI_q = p.k7*e5 + p.k8*(p.iq_ref - a.ihat_q);
 
     a.vconvhat_d_ref = a.vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff - p.Kad*iChat_d;
     a.vconvhat_q_ref = a.vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff - p.Kad*iChat_q;
@@ -506,14 +655,18 @@ function a = rectifierAlgebraic(t,x,p)
         a.gamma = 1;
     end
 
+    % a.gamma = a.m/a.mstar;  % this is always well-defined because vdc_for_mod >= p.vdcFloor > 0
+
     % back to physical quantities 
     % actual voltage applied to the AC side of the rectifier, by definition of the averaged bridge model
     a.vconv_alpha = a.m*a.v_dc;
     a.vconv_beta= a.gamma*a.vconv_beta_ref;
+    % a.vconv_beta = a.vconv_beta_ref;
 
     % rotate by phi (plant frame) before entering the plant equations
-    a.vconv_d = a.vconv_alpha*sp - a.vconv_beta_ref*cp;
-    a.vconv_q = a.vconv_alpha*cp + a.vconv_beta_ref*sp;
+    a.vconv_d = a.vconv_alpha*sp - a.vconv_beta*cp;
+    a.vconv_q = a.vconv_alpha*cp + a.vconv_beta*sp;
+
 
     % DC-side KCL
     a.i_b = a.m*a.iL;
@@ -545,26 +698,38 @@ function avg = reconstructSignals(t,x,p)
     avg.i_dc    = x(:,14);
     avg.i_load  = -x(:,14);
     avg.vC_dc   = x(:,15);
-    avg.ig_d     = x(:,16);
-    avg.ig_q     = x(:,17);
+    avg.ig_d    = x(:,16);
+    avg.ig_q    = x(:,17);
 
     names = {'vg_d','vg_q','vo','i_load','vC','ig','vg','vg_theta','iL', ...
              'vhat_d','vhat_q','ihat_d','ihat_q','ev_dc','id_ref','iq_ref', ...
              'vPI_d','vPI_q','vconvhat_d_ref','vconvhat_q_ref','vconv_alpha_ref', ...
              'vconv_beta_ref','mstar','m','gamma','vconv_d','vconv_q', ...
-             'vconv_alpha','vconv_beta','i_b','v_dc','iC_dc','i_sh','algResidual'};
-
-    for k = 1:numel(names)
-        avg.(names{k}) = zeros(N,1);
-    end
+             'vconv_alpha','vconv_beta','i_b','v_dc','iC_dc','i_sh', ...
+             'algResidual'};
 
     for n = 1:N
         a = rectifierAlgebraic(t(n),x(n,:).',p);
+
         for k = 1:numel(names)
-            avg.(names{k})(n) = a.(names{k});
+            name = names{k};
+
+            % Skip this name if it does not exist in a
+            if ~isfield(a,name)
+                continue
+            end
+
+            % Initialize the field the first time it is encountered
+            if ~isfield(avg,name)
+                avg.(name) = zeros(N,1);
+            end
+
+            avg.(name)(n) = a.(name);
         end
     end
 end
+
+
 
 function ts = getLoggedTimeseries(logs,signalName)
     el = logs.getElement(signalName);
