@@ -376,7 +376,7 @@ function checkControllerSetpoints(idx, avg)
     id_ref = mean(avg.id_ref(idx));
     id_hat = mean(avg.ihat_d(idx));
 
-    iq_ref = mean(avg.igq_ref(idx));
+    iq_ref = mean(avg.iq_ref(idx));
     iq_hat = mean(avg.ihat_q(idx));
 
     vconv_d_ref = mean(avg.vconvhat_d_ref(idx));
@@ -466,12 +466,12 @@ function dx = rectifierODE(t,x,p)
     dx(3) = a.vhat_q;
     dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
 
-    dx(5) = p.kSOGI*p.w0*(a.ig-i_alpha)-p.w0*i_beta;
+    dx(5) = p.kSOGI*p.w0*(a.iL-i_alpha)-p.w0*i_beta;
     dx(6) = p.w0*i_alpha;
 
     dx(7) = p.vdc_ref-a.v_dc;
     dx(8) = a.id_ref-a.ihat_d;
-    dx(9) = p.igq_ref-a.ihat_q;
+    dx(9) = p.iq_ref-a.ihat_q;
 
     dx(10) = (a.vconv_d - vC_d - p.RL*iL_d)/p.L + p.w0*iL_q;
     dx(11) = (a.vconv_q - vC_q - p.RL*iL_q)/p.L - p.w0*iL_d;
@@ -571,7 +571,7 @@ function a = rectifierAlgebraic(t,x,p)
 
         % Current controller outputs dq voltage references
         vPI_d = p.k5*e4 + p.k6*(id_ref - a.ihat_d);
-        vPI_q = p.k7*e5 + p.k8*(p.igq_ref - a.ihat_q);
+        vPI_q = p.k7*e5 + p.k8*(p.iq_ref - a.ihat_q);
 
         % add decoupling terms and feedforward terms to get the final dq voltage references
         % last term: virtual resistance for the LCL capacitor current feedback. Set to 0 to disable.
@@ -604,10 +604,10 @@ function a = rectifierAlgebraic(t,x,p)
     a.v_dc = vdc;
     a.ev_dc = p.vdc_ref-a.v_dc;     % error signal for the DC voltage controller
     a.id_ref = -p.k3*a.ev_dc - p.k4*e3;
-    a.igq_ref = p.igq_ref;
+    a.iq_ref = p.iq_ref;
 
     a.vPI_d = p.k5*e4 + p.k6*(a.id_ref - a.ihat_d);
-    a.vPI_q = p.k7*e5 + p.k8*(p.igq_ref - a.ihat_q);
+    a.vPI_q = p.k7*e5 + p.k8*(p.iq_ref - a.ihat_q);
 
     a.vconvhat_d_ref = a.vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff - p.Kad*iChat_d;
     a.vconvhat_q_ref = a.vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff - p.Kad*iChat_q;
