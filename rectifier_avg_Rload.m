@@ -36,7 +36,7 @@ close all;
 
 %% 1) USER PARAMETERS
 p.tStop = 1;
-p.dtOut = 2e-5;
+p.dtOut = 1e-5;
 p.maxStep = 1e-4;
 
 p.Kad = 0;  % virtual resistance for the LCL capacitor current feedback. Set to 0 to disable.
@@ -72,7 +72,7 @@ p.Rload = 88;           % DC output/load resistance [ohm]
 
 p.vdc_ref = 300;        % DC voltage reference [V]
 p.iq_ref  = 0;          % q-axis current reference [A]
-p.igq_ref = 0;          % grid q-axis current reference [A]
+% p.igq_ref = 0;          % grid q-axis current reference [A]
 p.vd_ff = 170;          % constant feedforward d voltage [V]
 p.vq_ff = 0;            % constant feedforward q voltage [V]
 
@@ -129,76 +129,76 @@ checkGridStateAvg(idx, avg);
 checkControllerSetpoints(idx, avg);
 
 %% 7) BASIC PLOTS
-% fprintf('Plotting the terminal signals...');
-% figure('Name','Averaged Rectifier - Terminal Signals');
-% tiledlayout(3,2);
+fprintf('Plotting the terminal signals...');
+figure('Name','Averaged Rectifier - Terminal Signals');
+tiledlayout(3,2);
 
-% nexttile;
-% plot(avg.t,avg.vg);
-% grid on;
-% xlabel('Time [s]'); ylabel('v_{AC} [V]');
-% title('AC terminal voltage');
+nexttile;
+plot(avg.t,avg.vg);
+grid on;
+xlabel('Time [s]'); ylabel('v_{AC} [V]');
+title('AC terminal voltage');
 
-% nexttile;
-% plot(avg.t,avg.ig);
-% grid on;
-% xlabel('Time [s]'); ylabel('i_{AC} [A]');
-% title('AC terminal current');
+nexttile;
+plot(avg.t,avg.ig);
+grid on;
+xlabel('Time [s]'); ylabel('i_{AC} [A]');
+title('AC terminal current');
 
-% nexttile;
-% plot(avg.t,avg.vC);
-% grid on;
-% xlabel('Time [s]'); ylabel('Voltage [V]');
-% title('Capacitor voltage');
+nexttile;
+plot(avg.t,avg.vC);
+grid on;
+xlabel('Time [s]'); ylabel('Voltage [V]');
+title('Capacitor voltage');
 
-% nexttile;
-% plot(avg.t,avg.iL);
-% grid on;
-% xlabel('Time [s]'); ylabel('Current [A]');
-% title('Converter-side inductor current');
+nexttile;
+plot(avg.t,avg.iL_alpha);
+grid on;
+xlabel('Time [s]'); ylabel('Current [A]');
+title('Converter-side inductor current');
 
-% nexttile;
-% plot(avg.t,avg.v_dc);
-% grid on;
-% xlabel('Time [s]'); ylabel('v_{dc} [V]');
-% title('Measured DC-link voltage');
+nexttile;
+plot(avg.t,avg.v_dc);
+grid on;
+xlabel('Time [s]'); ylabel('v_{dc} [V]');
+title('Measured DC-link voltage');
 
-% nexttile;
-% plot(avg.t,avg.i_dc);
-% grid on;
-% xlabel('Time [s]'); ylabel('i_{dc} [A]');
-% title('DC-link inductor current');
+nexttile;
+plot(avg.t,avg.i_dc);
+grid on;
+xlabel('Time [s]'); ylabel('i_{dc} [A]');
+title('DC-link inductor current');
 
 
-% fprintf('Plotting the controller signals...');
-% figure('Name','Averaged Rectifier - Controller Signals');
-% tiledlayout(3,2);
+fprintf('Plotting the controller signals...');
+figure('Name','Averaged Rectifier - Controller Signals');
+tiledlayout(3,2);
 
-% nexttile;
-% plot(avg.t,avg.theta);
-% grid on;
-% xlabel('Time [s]'); ylabel('\theta [rad]');
-% title('PLL angle');
+nexttile;
+plot(avg.t,avg.theta);
+grid on;
+xlabel('Time [s]'); ylabel('\theta [rad]');
+title('PLL angle');
 
-% nexttile;
-% plot(avg.t,avg.vhat_q);
-% grid on;
-% xlabel('Time [s]'); ylabel('\hat{v}_q [V]');
-% title('PLL q-axis error');
+nexttile;
+plot(avg.t,avg.vhat_q);
+grid on;
+xlabel('Time [s]'); ylabel('\hat{v}_q [V]');
+title('PLL q-axis error');
 
-% nexttile;
-% plot(avg.t,avg.id_ref,avg.t,avg.ihat_d);
-% grid on;
-% xlabel('Time [s]'); ylabel('Current [A]');
-% legend('i_d^*','\hat{i}_d');
-% title('d-axis current loop');
+nexttile;
+plot(avg.t,avg.id_ref,avg.t,avg.ighat_d);
+grid on;
+xlabel('Time [s]'); ylabel('Current [A]');
+legend('i_d^*','\hat{i}_d');
+title('d-axis current loop');
 
-% nexttile;
-% plot(avg.t,avg.iq_ref,avg.t,avg.ihat_q);
-% grid on;
-% xlabel('Time [s]'); ylabel('Current [A]');
-% legend('i_q^*','\hat{i}_q');
-% title('q-axis current loop');
+nexttile;
+plot(avg.t,avg.iq_ref,avg.t,avg.ighat_q);
+grid on;
+xlabel('Time [s]'); ylabel('Current [A]');
+legend('i_q^*','\hat{i}_q');
+title('q-axis current loop');
 
 % nexttile;
 % plot(avg.t,avg.m);
@@ -213,28 +213,28 @@ checkControllerSetpoints(idx, avg);
 % legend('v_{conv,\alpha}^*','v_{conv,\alpha}');
 % title('Converter voltage command vs average');
 
-% figure('Name','LCL dq Current Diagnostics');
-% tiledlayout(2,1);
+figure('Name','LCL dq Current Diagnostics');
+tiledlayout(2,1);
 
-% nexttile;
-% plot(avg.t,avg.iL_d,'LineWidth',1.2); hold on;
-% plot(avg.t,avg.ig_d,'LineWidth',1.2);
-% grid on;
-% xlabel('Time [s]');
-% ylabel('Current [A]');
-% legend('i_{L,d}','i_{g,d}');
-% title('d-axis currents');
-% xlim([0 p.tStop]);
+nexttile;
+plot(avg.t,avg.iL_d,'LineWidth',1.2); hold on;
+plot(avg.t,avg.ig_d,'LineWidth',1.2);
+grid on;
+xlabel('Time [s]');
+ylabel('Current [A]');
+legend('i_{L,d}','i_{g,d}');
+title('d-axis currents');
+xlim([0 p.tStop]);
 
-% nexttile;
-% plot(avg.t,avg.iL_q,'LineWidth',1.2); hold on;
-% plot(avg.t,avg.ig_q,'LineWidth',1.2);
-% grid on;
-% xlabel('Time [s]');
-% ylabel('Current [A]');
-% legend('i_{L,q}','i_{g,q}');
-% title('q-axis currents');
-% xlim([0 p.tStop]);
+nexttile;
+plot(avg.t,avg.iL_q,'LineWidth',1.2); hold on;
+plot(avg.t,avg.ig_q,'LineWidth',1.2);
+grid on;
+xlabel('Time [s]');
+ylabel('Current [A]');
+legend('i_{L,q}','i_{g,q}');
+title('q-axis currents');
+xlim([0 p.tStop]);
 
 % % figure;
 % % plot(avg.t,avg.mstar);
@@ -263,16 +263,16 @@ checkControllerSetpoints(idx, avg);
 % xlim([0 p.tStop]);
 
 
-% figure('Name','Grid Voltage Reference Check');
-% plot(avg.t,avg.vg,'LineWidth',1.2);
-% hold on;
-% plot(avg.t,avg.vg_theta,'--','LineWidth',1.2);
-% grid on;
+figure('Name','Grid Voltage Reference Check');
+plot(avg.t,avg.vg,'LineWidth',1.2);
+hold on;
+plot(avg.t,avg.vg_theta,'--','LineWidth',1.2);
+grid on;
 
-% xlabel('Time [s]');
-% ylabel('Voltage [V]');
-% legend('\phi = \omega_0t','\theta');
-% title('Grid Voltage Reconstruction');
+xlabel('Time [s]');
+ylabel('Voltage [V]');
+legend('\phi = \omega_0t','\theta');
+title('Grid Voltage Reconstruction');
 
 %% DIAGNOSTIC PLOTS
 function fig = plotGridStates(t, p, avg)
@@ -338,7 +338,7 @@ function fig = plotGridStates(t, p, avg)
     ax2 = nexttile;
     plot(avg.t,avg.ig,'LineWidth',1.2);
     hold on;
-    plot(avg.t,avg.iL,'LineWidth',1.2);
+    plot(avg.t,avg.iL_alpha,'LineWidth',1.2);
     % hold on;
     % plot(avg.t,avg.i_alpha,'LineWidth',1.2);
     % hold on;
@@ -374,10 +374,10 @@ end
 function checkControllerSetpoints(idx, avg)
     fprintf('\nChecking controller setpoints...\n');
     id_ref = mean(avg.id_ref(idx));
-    id_hat = mean(avg.ihat_d(idx));
+    id_hat = mean(avg.ighat_d(idx));
 
     iq_ref = mean(avg.iq_ref(idx));
-    iq_hat = mean(avg.ihat_q(idx));
+    iq_hat = mean(avg.ighat_q(idx));
 
     vconv_d_ref = mean(avg.vconvhat_d_ref(idx));
     vconv_d = mean(avg.vconv_d(idx));   
@@ -461,7 +461,7 @@ function dx = rectifierODE(t,x,p)
 
     dx = zeros(17,1);
 
-    dx(1) = p.kSOGI*p.w0*(a.vC-v_alpha)-p.w0*v_beta;
+    dx(1) = p.kSOGI*p.w0*(a.vC-v_alpha) - p.w0*v_beta;
     dx(2) = p.w0*v_alpha;
     dx(3) = a.vhat_q;
     dx(4) = p.w0+p.k1*a.vhat_q+p.k2*x(3);
@@ -469,9 +469,10 @@ function dx = rectifierODE(t,x,p)
     dx(5) = p.kSOGI*p.w0*(a.ig-i_alpha)-p.w0*i_beta;
     dx(6) = p.w0*i_alpha;
 
-    dx(7) = p.vdc_ref-a.v_dc;
-    dx(8) = a.id_ref-a.ihat_d;
-    dx(9) = p.iq_ref-a.ihat_q;
+    dx(7) = p.vdc_ref-a.v_dc;   % = 0;
+    % dx(7) = 0;
+    dx(8) = a.id_ref-a.ighat_d;
+    dx(9) = p.iq_ref-a.ighat_q;
 
     dx(10) = (a.vconv_d - vC_d - p.RL*iL_d)/p.L + p.w0*iL_q;
     dx(11) = (a.vconv_q - vC_q - p.RL*iL_q)/p.L - p.w0*iL_d;
@@ -521,10 +522,11 @@ function a = rectifierAlgebraic(t,x,p)
     sp = sin(phi);
     cp = cos(phi);  
     % Physical grid keeps rotating perfectly at the nominal frequency
-    a.vC = vC_d*sp + vC_q*cp;
-    a.iL = iL_d*sp + iL_q*cp;
     a.ig = ig_d*sp + ig_q*cp;
     a.vg = p.vg_d*sp + p.vg_q*cp;
+    a.vC = vC_d*sp + vC_q*cp;
+    a.iL_alpha = iL_d*sp + iL_q*cp;
+    iL_beta  = -iL_d*cp + iL_q*sp;
 
     % DC output/load quantities. Because i_dc is defined positive from
     % the load node toward the DC link, normal rectification has i_dc < 0.
@@ -535,17 +537,21 @@ function a = rectifierAlgebraic(t,x,p)
     s = sin(theta);
     c = cos(theta);
             % !!!! for DIAGNOSTIC ONLY: does theta lock with phi?
-            a.vg_theta  = p.vg_d*s+p.vg_q*c;
+            a.vg_theta  = p.vg_d*s + p.vg_q*c;
 
     % controller uses hatted-dq quantities = plant-frame alpha-beta quantities rotated by theta
     a.vhat_d = v_alpha*s - v_beta*c;
     a.vhat_q = v_alpha*c + v_beta*s;
-    a.ihat_d = i_alpha*s - i_beta*c;
-    a.ihat_q = i_alpha*c + i_beta*s;
+    a.ighat_d = i_alpha*s - i_beta*c;     % using grid current
+    a.ighat_q = i_alpha*c + i_beta*s;     % using grid current
 
     % Scalar fixed-point solve for the ESR/modulator/controller algebraic loop.
     vdc = max(vC_dc,p.vdcFloor);
     A = p.Rsh/(p.Rsh+p.RCdc);
+
+    % iL in controller theta frame
+    a.iLhat_d = a.iL_alpha*s - iL_beta*c;
+    a.iLhat_q = a.iL_alpha*c + iL_beta*s;
 
     % capacitor current in plant frame (phi)
     iC_d = iL_d - ig_d;
@@ -567,16 +573,16 @@ function a = rectifierAlgebraic(t,x,p)
     % which affects the DC capacitor voltage
     for k = 1:p.algMaxIter
         ev = p.vdc_ref-vdc;
-        id_ref = -p.k3*ev - p.k4*e3;
+        id_ref = -p.k3*ev - p.k4*e3;   % = -12;
 
         % Current controller outputs dq voltage references
-        vPI_d = p.k5*e4 + p.k6*(id_ref - a.ihat_d);
-        vPI_q = p.k7*e5 + p.k8*(p.iq_ref - a.ihat_q);
+        vPI_d = p.k5*e4 + p.k6*(id_ref - a.ighat_d);
+        vPI_q = p.k7*e5 + p.k8*(p.iq_ref - a.ighat_q);
 
         % add decoupling terms and feedforward terms to get the final dq voltage references
         % last term: virtual resistance for the LCL capacitor current feedback. Set to 0 to disable.
-        vconvhat_d_ref = vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff - p.Kad*iChat_d;
-        vconvhat_q_ref = vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff - p.Kad*iChat_q;
+        vconvhat_d_ref = vPI_d - p.w0*p.L*a.ighat_q + p.vd_ff - p.Kad*iChat_d;
+        vconvhat_q_ref = vPI_q + p.w0*p.L*a.ighat_d + p.vq_ff - p.Kad*iChat_q;
 
         % undo rotation by theta to get the stationary-frame voltages
         vconv_alpha_ref = vconvhat_d_ref*s + vconvhat_q_ref*c;
@@ -588,7 +594,7 @@ function a = rectifierAlgebraic(t,x,p)
         m = min(max(mstar,-1),1);   % enforce saturation limits
 
         % calculate bridge current; this preserves p(t) for ideal averaged bridge model
-        i_b = m*a.iL;           
+        i_b = m*a.ig;           
         % calculate new vdc based on the bridge current and the DC capacitor ESR drop
         vdc_new = A*(vC_dc+p.RCdc*(i_dc-i_b));  
 
@@ -603,14 +609,15 @@ function a = rectifierAlgebraic(t,x,p)
     % recalculate everthing with the final vdc value to return to the ODE function
     a.v_dc = vdc;
     a.ev_dc = p.vdc_ref-a.v_dc;     % error signal for the DC voltage controller
-    a.id_ref = -p.k3*a.ev_dc - p.k4*e3;
+    a.id_ref = -p.k3*a.ev_dc - p.k4*e3;    
+    % a.id_ref = -12; 
     a.iq_ref = p.iq_ref;
 
-    a.vPI_d = p.k5*e4 + p.k6*(a.id_ref - a.ihat_d);
-    a.vPI_q = p.k7*e5 + p.k8*(p.iq_ref - a.ihat_q);
+    a.vPI_d = p.k5*e4 + p.k6*(a.id_ref - a.ighat_d);
+    a.vPI_q = p.k7*e5 + p.k8*(p.iq_ref - a.ighat_q);
 
-    a.vconvhat_d_ref = a.vPI_d - p.w0*p.L*a.ihat_q + p.vd_ff - p.Kad*iChat_d;
-    a.vconvhat_q_ref = a.vPI_q + p.w0*p.L*a.ihat_d + p.vq_ff - p.Kad*iChat_q;
+    a.vconvhat_d_ref = a.vPI_d - p.w0*p.L*a.ighat_q + p.vd_ff - p.Kad*iChat_d;
+    a.vconvhat_q_ref = a.vPI_q + p.w0*p.L*a.ighat_d + p.vq_ff - p.Kad*iChat_q;
 
     % undo rotation by theta to get the stationary-frame voltages
     a.vconv_alpha_ref = a.vconvhat_d_ref*s+a.vconvhat_q_ref*c;
@@ -634,7 +641,6 @@ function a = rectifierAlgebraic(t,x,p)
     % actual voltage applied to the AC side of the rectifier, by definition of the averaged bridge model
     a.vconv_alpha = a.m*a.v_dc;
     a.vconv_beta= a.gamma*a.vconv_beta_ref;
-    % a.vconv_beta = a.vconv_beta_ref;
 
     % rotate by phi (plant frame) before entering the plant equations
     a.vconv_d = a.vconv_alpha*sp - a.vconv_beta*cp;
@@ -642,7 +648,7 @@ function a = rectifierAlgebraic(t,x,p)
 
 
     % DC-side KCL
-    a.i_b = a.m*a.iL;
+    a.i_b = a.m*a.ig;  
     a.iC_dc = i_dc-a.i_b-a.v_dc/p.Rsh;
     a.i_sh = a.v_dc/p.Rsh;
 
@@ -674,8 +680,9 @@ function avg = reconstructSignals(t,x,p)
     avg.ig_d    = x(:,16);
     avg.ig_q    = x(:,17);
 
-    names = {'vg_d','vg_q','vo','i_load','vC','ig','vg','vg_theta','iL', ...
-             'vhat_d','vhat_q','ihat_d','ihat_q','ev_dc','id_ref','iq_ref', ...
+    names = {'vg_d','vg_q','vo','i_load','vC','ig','vg','vg_theta','iL_alpha', ...
+             'vhat_d','vhat_q','ighat_d','ighat_q','iLhat_d','iLhat_q', ...
+             'ev_dc','id_ref','iq_ref', ...
              'vPI_d','vPI_q','vconvhat_d_ref','vconvhat_q_ref','vconv_alpha_ref', ...
              'vconv_beta_ref','mstar','m','gamma','vconv_d','vconv_q', ...
              'vconv_alpha','vconv_beta','i_b','v_dc','iC_dc','i_sh', ...
